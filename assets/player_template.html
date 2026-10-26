@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e5e7eb; --text:#171a1f;
+    --muted:#6b7280; --accent:#c0392b; --accent-soft:#fdf0ee;
+    --hls:#b45309; --mp3:#0f766e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);padding-bottom:104px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+      "Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    position:sticky;top:0;z-index:20;background:rgba(246,247,249,.94);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+    padding:14px 20px 10px;
+  }
+  .row{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:17px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
+  .count{font-size:12px;color:var(--muted);white-space:nowrap}
+  .search{
+    flex:1;min-width:180px;height:34px;border:1px solid var(--line);border-radius:9px;
+    padding:0 12px;font-size:13px;background:#fff;outline:none;color:var(--text);
+  }
+  .search:focus{border-color:#c9c2bf;box-shadow:0 0 0 3px rgba(192,57,43,.07)}
+  select{
+    height:34px;border:1px solid var(--line);border-radius:9px;padding:0 8px;
+    font-size:13px;background:#fff;color:var(--text);outline:none;cursor:pointer;
+  }
+  .chips{max-width:1180px;margin:9px auto 0;display:flex;gap:6px;flex-wrap:wrap}
+  .chip{
+    font-size:12px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;color:#4b5563;cursor:pointer;transition:.14s;white-space:nowrap;
+  }
+  .chip:hover{border-color:#d6d3d1}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  main{max-width:1180px;margin:16px auto 0;padding:0 20px}
+  .grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:11px;
+    padding:11px 13px;cursor:pointer;display:flex;align-items:center;gap:11px;
+    transition:border-color .14s,box-shadow .14s,transform .14s;
+    content-visibility:auto;contain-intrinsic-size:auto 58px;
+  }
+  .card:hover{border-color:#d8d2ce;box-shadow:0 2px 8px rgba(20,25,40,.05);transform:translateY(-1px)}
+  .card.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 2px 10px rgba(192,57,43,.12)}
+  .card.dead{opacity:.5}
+  .dot{
+    width:30px;height:30px;flex:0 0 30px;border-radius:8px;background:#f3f4f6;
+    display:flex;align-items:center;justify-content:center;font-size:11px;
+    font-weight:600;color:#9ca3af;
+  }
+  .card.on .dot{background:var(--accent);color:#fff}
+  .meta{min-width:0;flex:1}
+  .name{font-size:13.5px;font-weight:560;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-size:10px;padding:1px 5px;border-radius:4px;flex:0 0 auto;border:1px solid}
+  .tag.hls{color:var(--hls);border-color:#fde3c4;background:#fffbf5}
+  .tag.mp3{color:var(--mp3);border-color:#ccece8;background:#f4fdfb}
+  .empty{text-align:center;color:var(--muted);padding:70px 0;font-size:13px}
+  footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(255,255,255,.95);backdrop-filter:blur(14px);
+    border-top:1px solid var(--line);padding:11px 20px;
+  }
+  .bar{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .now{flex:1;min-width:0}
+  .now .t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .now .s{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .live{color:var(--accent);font-size:10px;font-weight:700}
+  audio{width:330px;max-width:46vw;height:34px}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>__TITLE__</h1>
+    <span class="count" id="count"></span>
+    <input class="search" id="q" placeholder="搜台名 / 城市，如 交通、广东、哈尔滨">
+    <select id="prov"></select>
+  </div>
+  <div class="chips" id="cats"></div>
+</header>
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">没有匹配的电台，换个关键词试试</div>
+</main>
+<footer>
+  <div class="bar">
+    <div class="now">
+      <div class="t" id="nowName">未选择电台</div>
+      <div class="s" id="nowInfo">点上面任意一个卡片开始收听</div>
+    </div>
+    <audio id="audio" controls preload="none"></audio>
+  </div>
+</footer>
+<script>__HLS_JS__</script>
+<script>
+const STATIONS = __STATIONS__;
+const PROV_STATS = __PROV_STATS__;
+
+const audio = document.getElementById('audio');
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const countEl = document.getElementById('count');
+const provSel = document.getElementById('prov');
+const catsEl = document.getElementById('cats');
+const qEl = document.getElementById('q');
+const nowName = document.getElementById('nowName');
+const nowInfo = document.getElementById('nowInfo');
+
+let hls = null;
+let cur = -1;
+let filterProv = '';
+let filterCat = '';
+
+// 省份下拉：按电台数降序
+const provOrder = Object.entries(PROV_STATS).sort((a, b) => b[1] - a[1]);
+provSel.innerHTML = '<option value="">全部地区</option>' +
+  provOrder.map(([p, n]) => `<option value="${p}">${p}（${n}）</option>`).join('');
+
+// 分类 chips
+const cats = ['全部', '新闻', '交通', '音乐', '文艺', '经济', '生活', '综合', '农村', '民族', '外语', '体育', '其他'];
+catsEl.innerHTML = cats.map((c, i) =>
+  `<span class="chip${i === 0 ? ' on' : ''}" data-cat="${c === '全部' ? '' : c}">${c}</span>`
+).join('');
+catsEl.addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  catsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  chip.classList.add('on');
+  filterCat = chip.dataset.cat;
+  render();
+});
+
+provSel.addEventListener('change', () => { filterProv = provSel.value; render(); });
+
+let qTimer = null;
+qEl.addEventListener('input', () => {
+  clearTimeout(qTimer);
+  qTimer = setTimeout(render, 140);
+});
+
+function match(s) {
+  if (filterProv && s.p !== filterProv) return false;
+  if (filterCat && s.c !== filterCat) return false;
+  const q = qEl.value.trim().toLowerCase();
+  if (q && !(s.n.toLowerCase().includes(q) || (s.p || '').toLowerCase().includes(q))) return false;
+  return true;
+}
+
+function render() {
+  const list = STATIONS.filter(match);
+  countEl.textContent = `${list.length} / ${STATIONS.length} 个电台`;
+  empty.style.display = list.length ? 'none' : 'block';
+  const parts = list.map((s, i) => {
+    const idx = STATIONS.indexOf(s);
+    const kind = s.t === 'hls' ? 'hls' : 'mp3';
+    const dead = s.ok === false ? ' dead' : '';
+    return `<div class="card${dead}" data-i="${idx}">
+      <div class="dot">${String(idx + 1).padStart(2, '0')}</div>
+      <div class="meta">
+        <div class="name"></div>
+        <div class="sub"></div>
+      </div>
+      <span class="tag ${kind}">${kind.toUpperCase()}</span>
+    </div>`;
+  });
+  grid.innerHTML = parts.join('');
+  // 用 textContent 填文本，避免台名里的特殊字符破坏结构
+  grid.querySelectorAll('.card').forEach(card => {
+    const s = STATIONS[+card.dataset.i];
+    card.querySelector('.name').textContent = s.n;
+    card.querySelector('.sub').textContent = [s.p, s.c].filter(Boolean).join(' · ');
+    if (s.ok === false) card.querySelector('.sub').textContent += ' · 上次检测未连通';
+  });
+}
+
+grid.addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (card) play(+card.dataset.i);
+});
+
+function play(i) {
+  const s = STATIONS[i];
+  if (!s) return;
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('on'));
+  const card = document.querySelector(`.card[data-i="${i}"]`);
+  if (card) card.classList.add('on');
+
+  if (hls) { hls.destroy(); hls = null; }
+  audio.removeAttribute('src');
+  audio.load();
+
+  cur = i;
+  nowName.innerHTML = s.n + ' <span class="live">● 直播</span>';
+  nowInfo.textContent = `连接中… ${s.p} · ${s.c}`;
+
+  const done = () => {
+    nowInfo.textContent = `${s.p} · ${s.c} · ${s.t.toUpperCase()}`;
+  };
+  const fail = () => {
+    nowInfo.textContent = `${s.p} · ${s.c} · 这个台连不上，换一个试试`;
+  };
+
+  if (s.t === 'hls' && window.Hls && window.Hls.isSupported()) {
+    hls = new Hls({ enableWorker: true, lowLatencyMode: false });
+    hls.loadSource(s.u);
+    hls.attachMedia(audio);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      audio.play().then(done).catch(() => {
+        nowInfo.textContent = '浏览器拦截了自动播放，点播放器上的播放键';
+      });
+    });
+    hls.on(Hls.Events.ERROR, (evt, data) => { if (data.fatal) fail(); });
+  } else {
+    audio.src = s.u;
+    audio.play().then(done).catch(() => {
+      // 可能是自动播放策略，也可能是流失效
+      nowInfo.textContent = `${s.p} · ${s.c} · 点播放键试试`;
+    });
+  }
+}
+
+audio.addEventListener('error', () => {
+  if (cur >= 0) nowInfo.textContent = `${STATIONS[cur].p} · ${STATIONS[cur].c} · 流错误，换一个台`;
+});
+audio.addEventListener('playing', () => {
+  if (cur >= 0) nowInfo.textContent = `${STATIONS[cur].p} · ${STATIONS[cur].c} · ${STATIONS[cur].t.toUpperCase()} · 正在播放`;
+});
+
+render();
+</script>
+</body>
+</html>
